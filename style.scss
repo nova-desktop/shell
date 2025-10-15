@@ -1,0 +1,21 @@
+* {
+  font-family: Noto Sans;
+  font-size: 16px;
+}
+
+window {
+  background-color: transparent;
+}
+
+.transparent {
+  background-color: transparent;
+}
+
+button.base {
+  padding: 0;
+  min-width: 0;
+  min-height: 0;
+  border-radius: 0;
+  font-weight: normal;
+  background-color: rgba(0, 0, 0, 0);
+}

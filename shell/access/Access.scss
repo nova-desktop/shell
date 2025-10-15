@@ -1,0 +1,48 @@
+.access {
+  border: 2px solid #444444;
+  border-radius: 12px;
+
+  background-color: #222222bb;
+
+  .access-input {
+    padding: 12px;
+    border-bottom: 1px solid #88888844;
+  }
+
+  entry {
+    padding: 0;
+    background-color: transparent;
+    outline: none;
+  }
+
+  .access-results {
+    padding: 12px;
+  }
+
+  .access-result {
+    min-height: 20px;
+    min-width: 200px;
+    padding: 12px;
+    border-radius: 8px;
+  }
+
+  .access-result-focused {
+    background-color: #88888855;
+  }
+
+  .access-result-icon,
+  .access-result-icon label,
+  .access-result-icon image {
+    min-width: 16px;
+    min-height: 16px;
+    font-size: 14px;
+  }
+
+  .access-result-title {
+    font-weight: 500;
+  }
+
+  .access-result-plugin-name {
+    color: #ffffff8c;
+  }
+}

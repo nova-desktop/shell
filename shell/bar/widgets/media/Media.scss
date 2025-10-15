@@ -1,0 +1,33 @@
+box.cover-art {
+  color: white;
+  background-size: cover;
+  background-position: center;
+  border-radius: 0 18px 18px 0;
+  background-blend-mode: darken;
+  background-image: linear-gradient(0deg, #777, #777),
+    linear-gradient(0deg, #000, #000);
+}
+
+.media {
+  padding-left: 4px;
+}
+
+.media-buttons {
+  padding-right: 8px;
+}
+
+.media-label {
+  padding: 0 12px;
+}
+
+.media button.base:hover {
+  color: #89b4fa;
+}
+
+.media button.base:first-child {
+  margin-right: -3px;
+}
+
+.play {
+  margin: 0 4px;
+}

@@ -1,0 +1,64 @@
+.powermenu {
+  background-color: rgba(33, 33, 33, 0.9);
+  border-radius: 20px;
+  padding: 48px;
+}
+
+.powerbutton {
+  min-width: 48px;
+  min-height: 48px;
+  padding: 20px;
+  border-radius: 100px;
+
+  label {
+    min-height: 40px;
+    min-width: 40px;
+    font-size: 32px;
+    font-family: "JetBrainsMono Nerd Font Propo";
+    font-weight: bold;
+  }
+
+  &:hover {
+    color: #ffffff;
+  }
+}
+
+.poweroff {
+  color: #fb2340;
+
+  &:hover {
+    background-color: #fb2340;
+  }
+}
+
+.reboot {
+  color: #ffa05c;
+
+  &:hover {
+    background-color: #ffa05c;
+  }
+}
+
+.suspend {
+  color: #f5ec66;
+
+  &:hover {
+    background-color: #f5ec66;
+  }
+}
+
+.lock {
+  color: #44d593;
+
+  &:hover {
+    background-color: #44d593;
+  }
+}
+
+.logout {
+  color: #88f7e2;
+
+  &:hover {
+    background-color: #88f7e2;
+  }
+}

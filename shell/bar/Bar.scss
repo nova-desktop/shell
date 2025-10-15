@@ -1,0 +1,33 @@
+label.icon {
+  font-family: "JetBrainsMono Nerd Font Propo";
+  font-size: 16px;
+}
+
+.media-icon {
+  font-size: 20px;
+}
+
+.bar {
+  min-height: 36px;
+  color: #9AA5CE;
+}
+
+.pill {
+  background-color: #24283B;
+  border-radius: 18px;
+  padding: 0 12px;
+}
+
+.pill.pill-media {
+  padding-right: 0;
+}
+
+.pill.pill-left {
+  padding: 0 8px 0 12px;
+  border-radius: 18px 0 0 18px;
+}
+
+.pill.pill-right {
+  padding: 0 12px 0 8px;
+  border-radius: 0 18px 18px 0;
+}
