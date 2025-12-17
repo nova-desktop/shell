@@ -22,9 +22,9 @@ export default function Bar({gdkmonitor, i}:{gdkmonitor: Gdk.Monitor, i: number}
 
   const monitor = createBinding(hyprland, "monitors").as(
     (monitors) =>
-      monitors?.find(
+      monitors.find(
         (m) => m.name.toLowerCase() === gdkmonitor.connector.toLowerCase()
-      )?.id ?? 0
+      )
   );
 
   return (

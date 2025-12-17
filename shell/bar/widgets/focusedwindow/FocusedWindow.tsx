@@ -1,4 +1,10 @@
-import { Accessor, createBinding, createState } from "ags";
+import {
+  Accessor,
+  createBinding,
+  createEffect,
+  createState,
+  onCleanup,
+} from "ags";
 import Hyprland from "gi://AstalHyprland";
 import { truncate } from "../../../../lib/utils";
 
@@ -7,71 +13,117 @@ const hyprland = Hyprland.get_default();
 export default function ActiveWindow({
   monitor,
 }: {
-  monitor: Accessor<number>;
+  monitor: Accessor<Hyprland.Monitor | undefined>;
 }) {
-  const [activeWindow, setActiveWindow] = createState(
-    hyprland.monitors.find((m) => m.id === monitor.get())!.activeWorkspace
-      .lastClient?.title ?? ""
-  );
+  const [activeWindow, setActiveWindow] = createState("");
 
-  let currentTitleSubDiscard: () => void;
+  let currentTitleSubDiscard: (() => void) | undefined;
   let lastFocusedClientAddress = "";
-  function focusedClientChange(focusedClient?: Hyprland.Client) {
-    if (lastFocusedClientAddress === focusedClient?.address) {
+  let lastMonitorId: number | undefined;
+
+  const resetActiveWindow = () => {
+    currentTitleSubDiscard?.();
+    currentTitleSubDiscard = undefined;
+    lastFocusedClientAddress = "";
+    setActiveWindow("");
+  };
+
+  const watchClientTitle = (client?: Hyprland.Client | null) => {
+    if (!client) {
+      resetActiveWindow();
       return;
     }
 
-    if (focusedClient == null) {
-      lastFocusedClientAddress = "";
-      currentTitleSubDiscard?.();
+    if (lastFocusedClientAddress === client.address) {
       return;
     }
 
     currentTitleSubDiscard?.();
-    const title = createBinding(focusedClient, "title");
-    lastFocusedClientAddress = focusedClient.address;
+    const title = createBinding(client, "title");
+    lastFocusedClientAddress = client.address;
     currentTitleSubDiscard = title.subscribe(() => {
-      setActiveWindow(title.get());
+      setActiveWindow(title());
     });
-  }
+  };
+
+  const updateFromWorkspace = () => {
+    const mon = monitor();
+
+    if (mon?.id !== lastMonitorId) {
+      lastMonitorId = mon?.id;
+      resetActiveWindow();
+    }
+
+    if (!mon) {
+      resetActiveWindow();
+      return;
+    }
+
+    const ws = mon.activeWorkspace;
+    const client = ws.lastClient ?? ws.clients[0];
+
+    if (!client) {
+      resetActiveWindow();
+      return;
+    }
+
+    watchClientTitle(client);
+    setActiveWindow(client.title ?? "");
+  };
 
   const focusedClient = createBinding(hyprland, "focusedClient");
-  focusedClient.subscribe(() => {
-    if (
-      focusedClient.get()?.get_workspace()?.get_monitor()?.id === monitor.get()
-    ) {
-      focusedClientChange(focusedClient.get());
-      setActiveWindow(focusedClient.get()?.title ?? "");
+  createEffect(() => {
+    const mon = monitor();
+    const client = focusedClient();
+
+    if (!mon) {
+      resetActiveWindow();
+      return;
+    }
+
+    if (client?.get_workspace()?.get_monitor()?.id === mon.id) {
+      watchClientTitle(client);
+      setActiveWindow(client?.title ?? "");
     }
   });
 
   const focusedWorkspace = createBinding(hyprland, "focusedWorkspace");
-  focusedWorkspace.subscribe(() => {
-    if (focusedWorkspace.get().monitor.id === monitor.get()) {
-      const client =
-        focusedWorkspace.get().lastClient ?? focusedWorkspace.get().clients[0];
-      focusedClientChange(client);
+  createEffect(() => {
+    const mon = monitor();
+    const ws = focusedWorkspace();
+
+    if (!mon || !ws) {
+      return;
+    }
+
+    if (ws.monitor.id === mon.id) {
+      const client = ws.lastClient ?? ws.clients[0];
+
+      if (!client) {
+        resetActiveWindow();
+        return;
+      }
+
+      watchClientTitle(client);
       setActiveWindow(client.title ?? "");
     }
   });
 
-  function clientMoved() {
-    const ws = hyprland.monitors.find(
-      (m) => m.id === monitor.get()
-    )!.activeWorkspace;
+  const clientMoved = () => updateFromWorkspace();
+  const movedId = hyprland.connect("client-moved", clientMoved);
+  const removedId = hyprland.connect("client-removed", clientMoved);
 
-    if (ws.get_clients().length === 0) {
-      focusedClientChange();
-      setActiveWindow("");
-    } else {
-      const client = ws.clients[0];
-      focusedClientChange(client);
-      setActiveWindow(client.title);
-    }
-  }
+  onCleanup(() => {
+    currentTitleSubDiscard?.();
+    hyprland.disconnect(movedId);
+    hyprland.disconnect(removedId);
+  });
 
-  hyprland.connect("client-moved", clientMoved);
-  hyprland.connect("client-removed", clientMoved);
+  createEffect(() => {
+    // keep state in sync when monitor accessor changes
+    monitor();
+    updateFromWorkspace();
+  });
 
   return (
     <box cssClasses={activeWindow.as((t) => [t ? "pill" : ""].filter(Boolean))}>
