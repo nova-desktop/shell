@@ -59,7 +59,7 @@ export default function SysTray() {
                 button={Gdk.BUTTON_PRIMARY}
                 onPressed={() => pop.popup()}
               />
-              <image gicon={createBinding(item, "gicon")} />
+              <image gicon={item.gicon} />
             </button>
           );
         }}
