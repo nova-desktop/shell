@@ -1,4 +1,14 @@
-import { Accessor, createState, createBinding, createComputed, With, For } from "ags";
+import {
+  Accessor,
+  createState,
+  createBinding,
+  createComputed,
+  With,
+  For,
+  createEffect,
+  onCleanup,
+  onMount,
+} from "ags";
 import app from "ags/gtk4/app";
 import Mpris from "gi://AstalMpris";
 import style from "./Media.scss";
@@ -56,10 +66,20 @@ function MediaVisual({
 }
 
 function MediaFake() {
-  const [coverArt] = createState(false);
+  const [coverArt] = createState("");
   const [playbackStatus] = createState(false);
+  const [label] = createState("Nothing is playing");
 
-  return <MediaVisual songLabel="Nothing is playing" coverArt={coverArt} next={() => {}} playPause={() => {}} previous={() => {}} playbackStatus={playbackStatus} />
+  return (
+    <MediaVisual
+      songLabel={label}
+      coverArt={coverArt}
+      next={() => {}}
+      playPause={() => {}}
+      previous={() => {}}
+      playbackStatus={playbackStatus}
+    />
+  );
 }
 
 function MediaActual({ player }: { player: Mpris.Player }) {
@@ -69,30 +89,49 @@ function MediaActual({ player }: { player: Mpris.Player }) {
       !artist && !title ? "Nothing is playing" : `${title} - ${artist}`
   );
   const coverArt = createBinding(player, "coverArt");
-  const playbackStatus = createBinding(player, "playbackStatus").as((s) =>
-    s === Mpris.PlaybackStatus.PLAYING
-  );
-
-  return <MediaVisual songLabel={songLabel} coverArt={coverArt} next={() => player.next()} playPause={() => player.play_pause()} previous={() => player.previous()} playbackStatus={playbackStatus} />
-}
-
-export default function Media() {
-  const player = createBinding(mpris, "players").as(
-    (players) => players.filter((p) => !p.busName.endsWith("playerctld"))
-  );
-  const hasPlayers = player.as(
-    (players) => players.length !== 0
+  const playbackStatus = createBinding(player, "playbackStatus").as(
+    (s) => s === Mpris.PlaybackStatus.PLAYING
   );
 
   return (
+    <MediaVisual
+      songLabel={songLabel}
+      coverArt={coverArt}
+      next={() => player.next()}
+      playPause={() => player.play_pause()}
+      previous={() => player.previous()}
+      playbackStatus={playbackStatus}
+    />
+  );
+}
+const players = createBinding(mpris, "players").as((players) =>
+  players.filter((p) => !p.busName.endsWith("playerctld"))
+);
+
+export default function Media() {
+  const [playbackChanged, setPlaybackChanged] = createState(0);
+  createEffect(() => {
+    players();
+  });
+  const playersSorted = createComputed((get) =>
+    get(playbackChanged)
+      ? get(players).sort(
+          (a, b) =>
+            Number(a?.playbackStatus === Mpris.PlaybackStatus.PLAYING) -
+            Number(b?.playbackStatus === Mpris.PlaybackStatus.PLAYING)
+        )
+      : get(players)
+  );
+  const hasPlayers = players.as((players) => players.length !== 0);
+
+  return (
     <box class="media">
-      <For each={player}>
-        {(player) =>
-          <MediaActual player={player} />          
+      <With value={players}>
+        {(players) =>
+          hasPlayers.peek() ? <MediaActual player={players[0]} /> : null
         }
-      </For>
-      <With value={hasPlayers}>{(has) => has ? null : <MediaFake />}</With>
+      </With>
+      <With value={hasPlayers}>{(has) => (has ? null : <MediaFake />)}</With>
     </box>
   );
 }
-
