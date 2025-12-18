@@ -110,11 +110,13 @@ export default function ActiveWindow({
   });
 
   const clientMoved = () => updateFromWorkspace();
+  const addedId = hyprland.connect("client-added", clientMoved);
   const movedId = hyprland.connect("client-moved", clientMoved);
   const removedId = hyprland.connect("client-removed", clientMoved);
 
   onCleanup(() => {
     currentTitleSubDiscard?.();
+    hyprland.disconnect(addedId);
     hyprland.disconnect(movedId);
     hyprland.disconnect(removedId);
   });
